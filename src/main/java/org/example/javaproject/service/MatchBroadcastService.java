@@ -43,10 +43,10 @@ public class MatchBroadcastService {
 
         MatchUpdateMessage message = new MatchUpdateMessage(
                 match.getSets(),
-                match.getHomeScore(),
                 match.getAwayScore(),
-                match.getHomeTeam(),
+                match.getHomeScore(),
                 match.getAwayTeam(),
+                match.getHomeTeam(),
                 "Match update"
         );
 
