@@ -28,6 +28,7 @@ public class TestController {
         return ResponseEntity.internalServerError().build();
     }
 
+    // REST API endpoint om te broadcasten
     @GetMapping("/test/broadcast")
     public ResponseEntity<String> testBroadcast() {
         Match match = scraperService.scrapeMatch();
