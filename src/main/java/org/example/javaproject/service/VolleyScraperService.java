@@ -18,7 +18,7 @@ public class VolleyScraperService {
 
     public Match scrapeMatch() {
         try {
-            System.out.println(("Scraping match data from: {}" + matchUrl));
+            System.out.println(("Scraping match data from: " + matchUrl));
 
             Document document = Jsoup.connect(matchUrl)
                     .userAgent("Mozilla/5.0")
