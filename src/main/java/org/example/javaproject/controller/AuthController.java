@@ -20,7 +20,7 @@ public class AuthController {
         String username = request.getUsername();
 
         // Simpele validatie -> username mag niet leeg zijn
-        if (username != null || username.trim().isEmpty()) {
+        if (username == null || username.trim().isEmpty()) {
             System.out.println("Login poging met lege username");
             return ResponseEntity.badRequest().build();
         }
