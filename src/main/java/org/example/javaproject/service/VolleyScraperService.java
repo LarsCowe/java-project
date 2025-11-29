@@ -6,24 +6,43 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class VolleyScraperService {
-    private String matchUrl = "https://volleymatch-livescore-webclient.vercel.app/match/volleyball-match-2025";
+
+    private final WebClient webClient;
+
+    @Value("${match.url}")
+    private String matchUrl;
+
+    public VolleyScraperService(WebClient.Builder webClientBuilder) {
+        this.webClient = webClientBuilder.build();
+    }
 
     public Match scrapeMatch() {
         try {
             System.out.println(("Scraping match data from: " + matchUrl));
 
-            Document document = Jsoup.connect(matchUrl)
-                    .userAgent("Mozilla/5.0")
-                    .timeout(10000)
-                    .get();
+            // WebClient haalt HTML op, Jsoup parst het
+            String html = webClient.get()
+                    .uri(matchUrl)
+                    .header("User-Agent", "Mozilla/5.0")
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+
+            if (html == null || html.isEmpty()) {
+                System.out.println("Empty response from " + matchUrl);
+                return null;
+            }
+
+            Document document = Jsoup.parse(html);
 
             Match match = new Match();
 
@@ -63,10 +82,10 @@ public class VolleyScraperService {
             Elements liveScoreElements = document.select(".grid [data-score][data-team]");
             if (liveScoreElements.size() >= 2) {
                 try {
-                    // Find the set number for the live set
+                    // Vind de live set
                     Element liveSetNumberElement = document.selectFirst("[data-status='live']");
                     if (liveSetNumberElement != null) {
-                        // Extract set number from text like "Set 3 - Live"
+                        // Haal de set nummer uit tekst
                         String liveSetText = liveSetNumberElement.text();
                         String[] parts = liveSetText.split(" ");
                         if (parts.length >= 2) {
@@ -88,9 +107,6 @@ public class VolleyScraperService {
 
             return match;
 
-        } catch (IOException e) {
-            System.out.println("Failed to scrape match data from " + matchUrl + ": " + e.getMessage());
-            return null;
         } catch (Exception e) {
             System.out.println("Unexpected error while scraping match data: " + e.getMessage());
             e.printStackTrace();
