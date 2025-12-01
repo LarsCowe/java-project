@@ -70,7 +70,7 @@ src/main/java/org/example/javaproject/
 
 1. **Clone de repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/LarsCowe/java-project.git
    cd java-project
    ```
 
