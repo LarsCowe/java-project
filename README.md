@@ -25,7 +25,8 @@ Deze applicatie haalt automatisch volleybal wedstrijdgegevens op van een externe
 - **JSoup 1.21.2** - HTML parsing voor web scraping
 - **JWT (JJWT 0.12.3)** - Token-based authenticatie
 - **Maven** - Build & dependency management
-- **Spring Dotenv** - Environment variabelen beheer
+- **Spring Boot DevTools** - Hot reload tijdens development
+- **Spring Dotenv 4.0.0** - Environment variabelen beheer
 
 ## Project Structuur
 
@@ -52,8 +53,9 @@ src/main/java/org/example/javaproject/
 │   ├── MatchBroadcastService.java   # WebSocket broadcast service
 │   ├── MatchScraperScheduler.java   # Scheduled scraping service
 │   └── VolleyScraperService.java    # JSoup scraping logic
-└── util/
-    └── JwtUtil.java                 # JWT token utilities
+├── util/
+│   └── JwtUtil.java                 # JWT token utilities
+└── JavaProjectApplication.java      # Main application entry point
 ```
 
 ## Installatie & Setup
@@ -139,6 +141,7 @@ Content-Type: application/json
 #### Valideer Token
 ```http
 GET /api/auth/validate?token=<jwt-token>
+Authorization: Bearer <jwt-token>
 ```
 
 **Response:**
@@ -150,7 +153,7 @@ true
 
 #### Huidige Match Data
 ```http
-GET /api/matches/current
+GET /api/match
 Authorization: Bearer <jwt-token>
 ```
 
@@ -167,7 +170,24 @@ Authorization: Bearer <jwt-token>
       "homeScore": 25,
       "awayScore": 20
     }
-  ]
+  ],
+  "lastUpdated": "2025-01-15T14:30:00"
+}
+```
+
+### Health Check
+
+#### Service Status
+```http
+GET /api/health
+```
+
+**Response:**
+```json
+{
+  "status": "UP",
+  "service": "Match Tracker",
+  "hasMatchData": true
 }
 ```
 
@@ -183,16 +203,37 @@ const stompClient = Stomp.over(socket);
 stompClient.connect({}, function(frame) {
     console.log('Connected: ' + frame);
     
-    stompClient.subscribe('/topic/matches', function(message) {
+    stompClient.subscribe('/topic/match', function(message) {
         const matchUpdate = JSON.parse(message.body);
         console.log('Match update:', matchUpdate);
+        // matchUpdate bevat: homeTeam, awayTeam, homeScore, awayScore, sets, timestamp, message
     });
 });
 ```
 
+### WebSocket Message Format
+
+```json
+{
+  "homeTeam": "Team A",
+  "awayTeam": "Team B",
+  "homeScore": 2,
+  "awayScore": 1,
+  "sets": [
+    {
+      "setNumber": 1,
+      "homeScore": 25,
+      "awayScore": 20
+    }
+  ],
+  "timestamp": "2025-01-15T14:30:00",
+  "message": "Match update"
+}
+```
+
 ### WebSocket Topics
 
-- `/topic/matches` - Ontvangt real-time match updates
+- `/topic/match` - Ontvangt real-time match updates
 
 ## Configuratie
 
@@ -206,7 +247,7 @@ stompClient.connect({}, function(frame) {
 
 ## Security
 
-- Alle REST endpoints (behalve `/api/auth`) vereisen een geldig JWT token
+- Alle REST endpoints (behalve `/api/auth` en `/api/health`) vereisen een geldig JWT token
 - WebSocket verbindingen vereisen een geldig JWT token via query parameter
 - JWT tokens worden gesigned met HMAC-SHA256
 - Standaard token expiration is 24 uur
